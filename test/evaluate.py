@@ -28,7 +28,12 @@ def show_error_map(mrae_eval, model_name):
 
 
 if __name__ == '__main__':
-    test_modes = ['orig', 'rot', 'blur10', 'blur20']
+    test_modes = ['orig']#, 'rot', 'blur10', 'blur20']
+    
+    ap = []
+    app = []
+    apo = []
+    pr = []
     
     # evaluate hyperspectral image recovery
     # comment out other SR methods if only want to run one of them
@@ -54,37 +59,53 @@ if __name__ == '__main__':
             
             # load ground-truth hyperspectral file
             if mode == 'orig':
-                gt = load_hyperspectral_data(os.path.join('./data/hyperspectral_gt/orig/', file_name+'.mat'))
+                #gt = load_hyperspectral_data(os.path.join('./data/hyperspectral_gt/orig/', file_name+'.mat'))
+                gt = load_hyperspectral_data(os.path.join(r'D:\matR_backup\ps\sharpen_gt2', file_name+'.mat'))
             else:
                 gt = np.load(os.path.join('./data/hyperspectral_gt/'+mode, file_name+'.npy'))
             
+            
+            ## A+ Oracle recovery
+            print('      A+_Oracle method')
+            #rec = np.load(os.path.join('./data/hyperspectral_rec/A+_Oracle/'+mode, file_name+'.npy'))
+            rec = np.load(os.path.join('E:/hyperspectral_rec/A+_Oracle/'+mode, file_name+'.npy'))
+            mrae_eval = mrae(gt, rec)
+            print('      ( Mean MRAE: ', np.mean(mrae_eval), ')')
+            print('      ( 99pt MRAE: ', np.percentile(mrae_eval, 99), ')')
+            show_error_map(mrae_eval, model_name='A+_Oracle')
+            apo.append(np.mean(mrae_eval))
+            
             ## A++ recovery
             print('      A++ method')
-            rec = np.load(os.path.join('./data/hyperspectral_rec/A++/'+mode, file_name+'.npy'))
+            #rec = np.load(os.path.join('./data/hyperspectral_rec/A++/'+mode, file_name+'.npy'))
+            rec = np.load(os.path.join('E:/hyperspectral_rec/A++/'+mode, file_name+'.npy'))
             mrae_eval = mrae(gt, rec)
             print('      ( Mean MRAE: ', np.mean(mrae_eval), ')')
             print('      ( 99pt MRAE: ', np.percentile(mrae_eval, 99), ')')
             show_error_map(mrae_eval, model_name='A++')
-            
+            app.append(np.mean(mrae_eval))
             
             ## A+ recovery
             print('      A+ method')
-            rec = np.load(os.path.join('./data/hyperspectral_rec/A+/'+mode, file_name+'.npy'))
+            #rec = np.load(os.path.join('./data/hyperspectral_rec/A+/'+mode, file_name+'.npy'))
+            rec = np.load(os.path.join('E:/hyperspectral_rec/A+/'+mode, file_name+'.npy'))
             mrae_eval = mrae(gt, rec)
             print('      ( Mean MRAE: ', np.mean(mrae_eval), ')')
             print('      ( 99pt MRAE: ', np.percentile(mrae_eval, 99), ')')
             show_error_map(mrae_eval, model_name='A+')
-            
+            ap.append(np.mean(mrae_eval))
             
             ## PR-RELS recovery
             print('      PR-RELS method')
-            rec = np.load(os.path.join('./data/hyperspectral_rec/PR-RELS/'+mode, file_name+'.npy'))
+            #rec = np.load(os.path.join('./data/hyperspectral_rec/PR-RELS/'+mode, file_name+'.npy'))
+            rec = np.load(os.path.join('E:/hyperspectral_rec/PR-RELS/'+mode, file_name+'.npy'))
             mrae_eval = mrae(gt, rec)
             print('      ( Mean MRAE: ', np.mean(mrae_eval), ')')
             print('      ( 99pt MRAE: ', np.percentile(mrae_eval, 99), ')')
             show_error_map(mrae_eval, model_name='PR-RELS')
+            pr.append(np.mean(mrae_eval))
             
-            
+            '''
             ## AWAN recovery
             print('      AWAN method')
             rec = np.load(os.path.join('./data/hyperspectral_rec/AWAN/'+mode, file_name+'.npy'))
@@ -109,3 +130,4 @@ if __name__ == '__main__':
             print('      ( Mean MRAE: ', np.mean(mrae_eval), ')')
             print('      ( 99pt MRAE: ', np.percentile(mrae_eval, 99), ')')  
             show_error_map(mrae_eval, model_name='HSCNN-D')
+            '''

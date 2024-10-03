@@ -1,6 +1,6 @@
 Please follow the following steps in order:
 
-1. Download the ".mat" file of ICVL hyperspectral images from http://icvl.cs.bgu.ac.il/hyperspectral/
+1. Download the ".mat" file of ICVL hyperspectral images as described at https://icvl.cs.bgu.ac.il/pages/researches/hyperspectral-imaging.html
 
 2. Put the downloaded hyperspectral images to the folder: /test/data/hyperspectral_gt/orig/
 

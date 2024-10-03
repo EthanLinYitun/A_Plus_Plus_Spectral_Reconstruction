@@ -6,7 +6,7 @@ Created on Thu Nov 18 12:33:33 2021
 import numpy as np
 from itertools import combinations_with_replacement
 from numpy.linalg import inv, det
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 def get_polynomial_terms(num_of_var, highest_order, root):
     if highest_order == 1:
@@ -155,16 +155,16 @@ def sampling_data(data, num_sampling_points, rand=False):
     return data[sampling_points, :]
 
 
-def recover(regress_matrix, regress_input, advanced_mode, resources, gt_rgb=(), exposure=1):
+def recover(regress_matrix, regress_input, advanced_mode, cmf, exposure=1):
     
     recovery = {}
     recovery['spec'] = regress_input @ regress_matrix
-    recovery['rgb'] = recovery['spec'] @ resources['cmf']
+    recovery['rgb'] = recovery['spec'] @ cmf
     
     return recovery
 
 
-def per_channel_recover(regress_matrix, channel, regress_input, advanced_mode, resources, gt_data=(), exposure=1):
+def per_channel_recover(regress_matrix, channel, regress_input, advanced_mode, gt_data=(), exposure=1):
     
     recovery_ch = {}
     gt_data_ch = {}
@@ -180,7 +180,7 @@ def per_channel_recover(regress_matrix, channel, regress_input, advanced_mode, r
     return gt_data_ch, recovery_ch 
 
 
-def regularize(RegMat, regress_input, gt_data, advanced_mode, cost_func, resources=(), regress_input_tr=(), regress_output_tr=(), regress_mode=(), show_graph=False):
+def regularize(RegMat, regress_input, gt_data, advanced_mode, cost_func, cmf, regress_input_tr=(), regress_output_tr=(), regress_mode=(), show_graph=False):
     
     def determine_feasible_gamma(channel=(), max_range=None):
         if max_range:
@@ -202,16 +202,17 @@ def regularize(RegMat, regress_input, gt_data, advanced_mode, cost_func, resourc
         for gamma in test_gammas:
             if advanced_mode['Rel_Fit']:
                 RegMat.set_gamma(gamma, channel)
-                gt_data_ch, recovery_ch = per_channel_recover(RegMat.get_matrix(), channel, regress_input, advanced_mode, resources, gt_data)
-                cost.append(np.mean(cost_func(gt_data_ch, recovery_ch)))
+                gt_data_ch, recovery_ch = per_channel_recover(RegMat.get_matrix(), channel, regress_input, advanced_mode, gt_data)
+                cost.append(np.mean(cost_func(gt_data_ch['spec'], recovery_ch['spec'])))
             
             else:
                 RegMat.set_gamma(gamma)        
-                recovery = recover(RegMat.get_matrix(), regress_input, advanced_mode, resources, gt_data['rgb'])  
-                cost.append(np.mean(cost_func(gt_data, recovery)))
+                recovery = recover(RegMat.get_matrix(), regress_input, advanced_mode, cmf)  
+                cost.append(np.mean(cost_func(gt_data['spec'], recovery['spec'])))
             
         best_gamma = test_gammas[np.argmin(cost)]
         
+        '''
         if show_graph:
             plt.figure()
             plt.title('Tikhonov parameter search')
@@ -219,7 +220,7 @@ def regularize(RegMat, regress_input, gt_data, advanced_mode, cost_func, resourc
             plt.scatter(best_gamma, np.min(cost), c='r', marker='o')
             plt.xscale('log')
             plt.show()
-        
+        '''
         if return_best_model:
             return best_gamma, best_weights_sqr[np.argmin(cost)], best_weights_reg[np.argmin(cost)]
         else:

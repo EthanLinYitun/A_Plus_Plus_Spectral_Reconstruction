@@ -19,16 +19,26 @@ from evaluate import mrae
 
 def down_sampling_training_data(im_list):
     cmf = load_color_matching_functions('./resources/cie_1964_cmf.csv')
-    data_dir = 'E:/UEA/Resource/ICVL/'
+    data_dir = r'D:\matR_backup\ps\sharpen_gt2'
     
     gt_data = {'spec': [],
                'rgb': []}
     
-    for im_name in im_list:
-        print('     ', im_name[:-1])
+    cursor = 10
+    for i, im_name in enumerate(im_list):
+        progress = i / len(im_list) * 100
+        if progress >= cursor:
+            cursor += 10
+            print('Image Loading: ', i, ' / ', len(im_list))
+            
+        '''
         spec_img = load_hyperspectral_data(os.path.join(data_dir, im_name[:-1])) # 31 x H x W
         
         spec_data = spec_img.reshape(spec_img.shape[0], -1).T # Dim_Data x 31
+        '''
+        spec_img = loadmat(os.path.join(data_dir, im_name[:-1]))['cube'] # H x W x 31
+        spec_data = spec_img.reshape(-1, spec_img.shape[-1]) # Dim_Data x 31
+        
         spec_data = utils_reg.sampling_data(spec_data, num_sampling_points=30000, rand=False)     
     
         rgb_data = spec_data @ cmf
@@ -51,7 +61,13 @@ def knn(data, reference, k, batch_size=None):
     num_batch = num_reference//batch_size
     num_residual = num_reference%batch_size
     out_list = np.zeros((num_reference, k))
+    
+    cursor = 20
     for i in range(num_batch):
+        progress = i / num_batch * 100
+        if progress >= cursor:
+            print('KNN Progress: ', cursor, '%')
+            cursor += 20
         D = cdist(reference[i*batch_size:(i+1)*batch_size, :], data, "sqeuclidean")
         out_list[i*batch_size:(i+1)*batch_size, :] = np.argsort(D, axis=1)[:, :k]
     if num_residual:
@@ -62,6 +78,7 @@ def knn(data, reference, k, batch_size=None):
 
 
 def train(im_list):
+    print('=========Training Starts=========')
     # down sample the training data
     gt_data = down_sampling_training_data(im_list)
     
@@ -77,7 +94,7 @@ def train(im_list):
     primary_estimates_cluster_centers_norm = utils_sc.normc(loadmat('./resources/dictionary_a_plus_plus.mat')['anchors'].T)
     
     # calculate the nearest neighbors of each cluster center
-    nearest_neighbors = knn(primary_estimates_norm, primary_estimates_cluster_centers_norm, k=8192, batch_size=250).astype(int)
+    nearest_neighbors = knn(primary_estimates_norm, primary_estimates_cluster_centers_norm, k=1024, batch_size=250).astype(int)
     num_centers, num_neighbors = nearest_neighbors.shape
     
     # Training "Multiple" Regression Matrix
@@ -103,14 +120,12 @@ def train(im_list):
         
         RegMat[i].update(gt_data_nearest['rgb'], gt_data_nearest['spec'])
     
-    with open(os.path.join('./trained_models/', 'model_a_plus_plus.pkl'), 'wb') as handle:
+    with open(os.path.join('./trained_models/', 'model_a_plus_plus_retrain.pkl'), 'wb') as handle:
         pickle.dump(RegMat, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-#im_list = open('E:/UEA/Code/Sparse_Oracle/resources/fn_icvl_group_A.txt').readlines()
-#train(im_list[:3])
 
 
 def validate(im_list):    
+    print('=========Tuning Starts=========')
     # down sample the validation data
     gt_data = down_sampling_training_data(im_list)
     
@@ -126,7 +141,7 @@ def validate(im_list):
     primary_estimates_cluster_centers_norm = utils_sc.normc(loadmat('./resources/dictionary_a_plus_plus.mat')['anchors'].T)
     
     # calculate the nearest neighbors of each cluster center
-    nearest_neighbors = knn(primary_estimates_norm, primary_estimates_cluster_centers_norm, k=8192//2, batch_size=250).astype(int)
+    nearest_neighbors = knn(primary_estimates_norm, primary_estimates_cluster_centers_norm, k=1024//2, batch_size=250).astype(int)
     num_centers, num_neighbors = nearest_neighbors.shape
     
     regress_mode = {'type': 'poly', 
@@ -139,23 +154,33 @@ def validate(im_list):
     advanced_mode = {'Rel_Fit': False,
                      'Sparse': True}
     
-    with open(os.path.join('./trained_models/', 'model_a_plus_plus.pkl'), 'rb') as handle:
+    cmf = load_color_matching_functions('./resources/cie_1964_cmf.csv')
+    
+    with open(os.path.join('./trained_models/', 'model_a_plus_plus_retrain.pkl'), 'rb') as handle:
         RegMat = pickle.load(handle)
     
     # Regularizing Regression Matrix
+    cursor = 20
     for i in range(num_centers):
-        if i%100 == 50:
-            print('    anchor', i)
+        progress = i / num_centers * 100
+        if progress >= cursor:
+            print('Regularization Progress: ', cursor, '%')
+            cursor += 20
         nearest_idx_val = nearest_neighbors[i, :]
         gt_data_nearest_val = {}
         gt_data_nearest_val['spec'] = gt_data['spec'][nearest_idx_val, :]
         gt_data_nearest_val['rgb'] = gt_data['rgb'][nearest_idx_val, :]
         
-        RegMat[i] = utils_reg.regularize(RegMat[i], gt_data_nearest_val['rgb'], gt_data_nearest_val['spec'], advanced_mode, 
-                                         mrae, show_graph=False)
+        RegMat[i] = utils_reg.regularize(RegMat[i], gt_data_nearest_val['rgb'], gt_data_nearest_val, advanced_mode, 
+                                         mrae, cmf, show_graph=False)
     
-    with open(os.path.join('./trained_models/', 'model_a_plus_plus.pkl'), 'wb') as handle:
+    with open(os.path.join('./trained_models/', 'model_a_plus_plus_retrain.pkl'), 'wb') as handle:
         pickle.dump(RegMat, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-im_list = open('E:/UEA/Code/Sparse_Oracle/resources/fn_icvl_group_D.txt').readlines()
-validate(im_list[:3])
+if __name__ == '__main__':
+    im_list_train1 = open('./resources/fn_icvl_group_A.txt').readlines()
+    im_list_train2 = open('./resources/fn_icvl_group_B.txt').readlines()
+    train(im_list_train1 + im_list_train2)
+
+    im_list_val = open('./resources/fn_icvl_group_C.txt').readlines()
+    validate(im_list_val)

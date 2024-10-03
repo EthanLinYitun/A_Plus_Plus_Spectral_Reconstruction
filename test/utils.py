@@ -10,9 +10,51 @@ import utils_regression as utils_reg
 from utils_sparse import FaissKNeighbors
 from utils_regression import RegressionMatrix
     
+def load_a_plus_oracle_model():
+    import pickle
+    
+    # load K-SVD dictionary and normalize
+    spec_rec_anchors_norm = utils_sc.normc(loadmat('./trained_models/dictionary_a_plus_oracle.mat')['anchors'].T)
+    
+    # setup knn
+    knn_model = FaissKNeighbors(k=1)
+    knn_model.fit(spec_rec_anchors_norm, np.arange(0, spec_rec_anchors_norm.shape[0], 1))
+    
+    # load trained A++ local regression maps
+    path_regmat_a_plus_oracle = './trained_models/model_a_plus_oracle.pkl'
+    with open(path_regmat_a_plus_oracle, 'rb') as handle:
+        RegMat_a_plus_oracle = pickle.load(handle) 
+
+    return knn_model, RegMat_a_plus_oracle
+
+
+def recover_a_plus_oracle(rgb, gt_spec, knn_model, RegMat_a_plus_oracle):
+    ## normalize ground-truth spectra
+    dim, height, width = gt_spec.shape
+    gt_spec = gt_spec.reshape(31, -1).T
+    rgb = rgb.reshape(3, -1).T
+    
+    # normalize the primary spectral estimates
+    gt_spec_norm = utils_sc.normc(gt_spec)
+    
+    ## kNN with adjustable batch size
+    nearest_cluster_center = knn_model.predict(gt_spec_norm)
+    active_cluster_centers = np.unique(nearest_cluster_center).astype(int)
+    
+    ## apply local linear maps
+    recovery = np.zeros(gt_spec_norm.shape)
+    for i in active_cluster_centers:
+        is_nearest = nearest_cluster_center == i
+        rgb_nearest = rgb[is_nearest, :]
+        
+        recovery_part = rgb_nearest @ RegMat_a_plus_oracle[i].get_matrix()
+        recovery[is_nearest, :] = recovery_part
+    
+    return recovery.T.reshape(31, height, width)
+
 
 def load_a_plus_plus_model():
-    import pickle5 as pickle
+    import pickle#5 as pickle
     
     # load K-SVD dictionary and normalize
     spec_rec_anchors_norm = utils_sc.normc(loadmat('./trained_models/dictionary_a_plus_plus.mat')['anchors'].T)
@@ -22,7 +64,7 @@ def load_a_plus_plus_model():
     knn_model.fit(spec_rec_anchors_norm, np.arange(0, spec_rec_anchors_norm.shape[0], 1))
     
     # load trained A++ local regression maps
-    path_regmat_a_plus_plus = './trained_models/model_a_plus_plus.pkl'
+    path_regmat_a_plus_plus = './trained_models/model_a_plus_plus_retrain.pkl'
     with open(path_regmat_a_plus_plus, 'rb') as handle:
         RegMat_a_plus_plus = pickle.load(handle) 
 
