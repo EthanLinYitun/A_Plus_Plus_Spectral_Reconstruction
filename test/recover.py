@@ -10,7 +10,7 @@ import numpy as np
 import time
 
 
-test_modes = ['orig']#, 'rot', 'blur10', 'blur20']
+test_modes = ['orig', 'rot', 'blur10', 'blur20']
 
 # recover hyperspectral images from RGB images and store them
 # comment out other SR methods if only want to run one of them
@@ -39,12 +39,11 @@ for mode in test_modes:
         model = utils.load_a_plus_oracle_model()
         t = time.time()
         from rgb_simulate import load_hyperspectral_data
-        #gt_spec = load_hyperspectral_data(os.path.join('./data/hyperspectral_gt/orig/', file_name+'.mat'))
-        gt_spec = load_hyperspectral_data(os.path.join(r'D:\matR_backup\ps\sharpen_gt2', file_name+'.mat'))
+        gt_spec = load_hyperspectral_data(os.path.join('./data/hyperspectral_gt/orig/', file_name+'.mat'))
         recovery = utils.recover_a_plus_oracle(rgb, gt_spec, model[0], model[1])
         print('      (', time.time()-t, 'seconds )')
-        #np.save(os.path.join('./data/hyperspectral_rec/A+_Oracle/'+mode, file_name), recovery)
-        np.save(os.path.join('E:/hyperspectral_rec/A+_Oracle/'+mode, file_name), recovery)
+        np.save(os.path.join('./data/hyperspectral_rec/A+_Oracle/'+mode, file_name), recovery)
+        
 
         ## A++ recovery
         print('      A++ method')
@@ -52,8 +51,7 @@ for mode in test_modes:
         t = time.time()
         recovery = utils.recover_a_plus_plus(rgb, model[0], model[1])
         print('      (', time.time()-t, 'seconds )')
-        #np.save(os.path.join('./data/hyperspectral_rec/A++/'+mode, file_name), recovery)
-        np.save(os.path.join('E:/hyperspectral_rec/A++/'+mode, file_name), recovery)
+        np.save(os.path.join('./data/hyperspectral_rec/A++/'+mode, file_name), recovery)
         
         
         ## A+ recovery
@@ -62,8 +60,7 @@ for mode in test_modes:
         t = time.time()
         recovery = utils.recover_a_plus(rgb, model[0], model[1])
         print('      (', time.time()-t, 'seconds )')
-        #np.save(os.path.join('./data/hyperspectral_rec/A+/'+mode, file_name), recovery)
-        np.save(os.path.join('E:/hyperspectral_rec/A+/'+mode, file_name), recovery)
+        np.save(os.path.join('./data/hyperspectral_rec/A+/'+mode, file_name), recovery)
     
         
         ## PR-RELS recovery
@@ -72,10 +69,9 @@ for mode in test_modes:
         t = time.time()
         recovery = utils.recover_pr_rels(rgb, model)
         print('      (', time.time()-t, 'seconds )')
-        #np.save(os.path.join('./data/hyperspectral_rec/PR-RELS/'+mode, file_name), recovery)    
-        np.save(os.path.join('E:/hyperspectral_rec/PR-RELS/'+mode, file_name), recovery)    
+        np.save(os.path.join('./data/hyperspectral_rec/PR-RELS/'+mode, file_name), recovery)
         
-        '''
+        
         ## AWAN recovery
         print('      AWAN method')
         model = utils.load_AWAN_model('orig')
@@ -101,4 +97,4 @@ for mode in test_modes:
         recovery = utils.recover_HSCNN_D(rgb, model, split_axis)
         print('      (', time.time()-t, 'seconds )')
         np.save(os.path.join('./data/hyperspectral_rec/HSCNN-D/'+mode, file_name), recovery)    
-        '''
+        

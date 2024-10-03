@@ -21,7 +21,7 @@ from evaluate import mrae
 
 def down_sampling_training_data(im_list):
     cmf = load_color_matching_functions('./resources/cie_1964_cmf.csv')
-    data_dir = r'D:\matR_backup\ps\sharpen_gt2'
+    data_dir = './data'
     
     gt_data = {'spec': [],
                'rgb': []}
@@ -33,14 +33,8 @@ def down_sampling_training_data(im_list):
             cursor += 10
             print('Image Loading: ', i, ' / ', len(im_list))
             
-        '''
         spec_img = load_hyperspectral_data(os.path.join(data_dir, im_name[:-1])) # 31 x H x W
-        
         spec_data = spec_img.reshape(spec_img.shape[0], -1).T # Dim_Data x 31
-        '''
-        spec_img = loadmat(os.path.join(data_dir, im_name[:-1]))['cube'] # H x W x 31
-        spec_data = spec_img.reshape(-1, spec_img.shape[-1]) # Dim_Data x 31
-        
         spec_data = utils_reg.sampling_data(spec_data, num_sampling_points=30000, rand=False)     
     
         rgb_data = spec_data @ cmf
@@ -172,9 +166,9 @@ def validate(im_list):
         pickle.dump(RegMat, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 if __name__ == '__main__':
-    #im_list_train1 = open('./resources/fn_icvl_group_A.txt').readlines()
-    #im_list_train2 = open('./resources/fn_icvl_group_B.txt').readlines()
-    #train(im_list_train1 + im_list_train2)
+    im_list_train1 = open('./resources/fn_icvl_group_A.txt').readlines()
+    im_list_train2 = open('./resources/fn_icvl_group_B.txt').readlines()
+    train(im_list_train1 + im_list_train2)
 
     im_list_val = open('./resources/fn_icvl_group_C.txt').readlines()
     validate(im_list_val)

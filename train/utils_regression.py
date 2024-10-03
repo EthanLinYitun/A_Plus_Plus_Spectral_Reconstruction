@@ -6,7 +6,7 @@ Created on Thu Nov 18 12:33:33 2021
 import numpy as np
 from itertools import combinations_with_replacement
 from numpy.linalg import inv, det
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 def get_polynomial_terms(num_of_var, highest_order, root):
     if highest_order == 1:
@@ -212,7 +212,6 @@ def regularize(RegMat, regress_input, gt_data, advanced_mode, cost_func, cmf, re
             
         best_gamma = test_gammas[np.argmin(cost)]
         
-        '''
         if show_graph:
             plt.figure()
             plt.title('Tikhonov parameter search')
@@ -220,7 +219,7 @@ def regularize(RegMat, regress_input, gt_data, advanced_mode, cost_func, cmf, re
             plt.scatter(best_gamma, np.min(cost), c='r', marker='o')
             plt.xscale('log')
             plt.show()
-        '''
+        
         if return_best_model:
             return best_gamma, best_weights_sqr[np.argmin(cost)], best_weights_reg[np.argmin(cost)]
         else:

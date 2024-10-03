@@ -10,9 +10,8 @@ from pandas import read_csv
 from glob import glob
 from scipy.ndimage import gaussian_filter
 
-from scipy.io import loadmat
+
 def load_hyperspectral_data(file_path):
-    '''
     f = h5py.File(file_path,'r')
     for kname, obj in f.items():
         if kname == 'rad':
@@ -20,10 +19,8 @@ def load_hyperspectral_data(file_path):
             break
     
     return np.array(output_obj) / 4095   # size: 31 x 1392 x 1300
-    '''
-    return np.swapaxes(np.array(loadmat(file_path)['cube']), 0, 2)
     
-
+    
 def interpolate(data, data_waveL, targeted_waveL):
     
     assert data.shape[0] == data_waveL.size, 'Wavelength sequence mismatch with data'
@@ -84,8 +81,7 @@ def blurring_hyperspectral_image(spec, sigma):
 
 if __name__ == '__main__':
     # load ground-truth hyperspectral file paths
-    #hyperspectral_files = glob('./data/hyperspectral_gt/orig/*.mat')
-    hyperspectral_files = glob('D:\\matR_backup\\ps\\sharpen_gt2\\*.mat')
+    hyperspectral_files = glob('./data/hyperspectral_gt/orig/*.mat')
     
     # load CIE 1964 color matching functions
     cmf = load_color_matching_functions('./resources/cie_1964_cmf.csv')
@@ -103,7 +99,7 @@ if __name__ == '__main__':
         # save original testing RGB image
         np.save(os.path.join('./data/rgb/orig/', file_name), spec2rgb(spec, cmf))
         
-        '''
+        
         # save rotated testing RGB image and processed ground-truth hyperspectral image
         spec_new = np.rot90(spec, k=1, axes=(1,2))
         np.save(os.path.join('./data/hyperspectral_gt/rot/', file_name), spec_new)
@@ -119,4 +115,4 @@ if __name__ == '__main__':
         spec_new = blurring_hyperspectral_image(spec, 20)
         np.save(os.path.join('./data/hyperspectral_gt/blur20/', file_name), spec_new)
         np.save(os.path.join('./data/rgb/blur20/', file_name), spec2rgb(spec_new, cmf))
-        '''
+        

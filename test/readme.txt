@@ -1,3 +1,5 @@
+Packages: scipy, h5py, faiss, pandas
+
 Please follow the following steps in order:
 
 1. Download the ".mat" file of ICVL hyperspectral images as described at https://icvl.cs.bgu.ac.il/pages/researches/hyperspectral-imaging.html
@@ -8,7 +10,7 @@ Please follow the following steps in order:
 
 4. Run the script "recover.py" for recovering the hyperspectral images (the recovery outcomes will be stored in: /test/data/hyperspectral_rec/)
 
-5. Run the script "evaluate.py" to calculate MRAE errors and show the error mpas
+5. Run the script "evaluate.py" to calculate MRAE errors and show the error maps
 
 ----
 

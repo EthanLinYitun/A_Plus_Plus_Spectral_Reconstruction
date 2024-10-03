@@ -64,7 +64,7 @@ def load_a_plus_plus_model():
     knn_model.fit(spec_rec_anchors_norm, np.arange(0, spec_rec_anchors_norm.shape[0], 1))
     
     # load trained A++ local regression maps
-    path_regmat_a_plus_plus = './trained_models/model_a_plus_plus_retrain.pkl'
+    path_regmat_a_plus_plus = './trained_models/model_a_plus_plus.pkl'
     with open(path_regmat_a_plus_plus, 'rb') as handle:
         RegMat_a_plus_plus = pickle.load(handle) 
 
